@@ -1,26 +1,29 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Dashboard from './Component/Dashboard';
+import ImageComponent from './Component/ImageComponent';
+import Sidebar from './Component/SideBar';
 
-function App() {
+const App: React.FC = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <div className="flex">
+        <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-16'}`}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/image" element={<ImageComponent />} />
+          </Routes>
+        </div>
+      </div>
+    </Router>
   );
-}
+};
 
 export default App;
