@@ -1,11 +1,10 @@
-/* eslint-disable jsx-a11y/img-redundant-alt */
 import React, { useCallback, useRef, useState } from "react";
 
 const ImageComponent: React.FC = () => {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]); // For input images
   const [backendImages, setBackendImages] = useState<
     { base64_image: string; attached_string: string }[]
-  >([]);
+  >([]); // Initialize as an empty array
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = useCallback(
@@ -29,16 +28,45 @@ const ImageComponent: React.FC = () => {
     });
 
     try {
-      const response = await fetch("http://localhost:8000/upload_with_base64", {
+      const response = await fetch("http://localhost:8000/upload_and_detect", {
         method: "POST",
         body: formData,
       });
       const data = await response.json();
-      setBackendImages(data);
+
+      if (Array.isArray(data)) {
+        setBackendImages(data);
+      } else {
+        setBackendImages([data]);
+      }
     } catch (error) {
       console.error("Error uploading images:", error);
     }
   };
+
+  // const uploadToBackend = async (files: FileList) => {
+  //   const formData = new FormData();
+  //   Array.from(files).forEach((file) => {
+  //     formData.append("files", file);
+  //   });
+
+  //   try {
+  //     const response = await fetch("http://localhost:8000/upload_with_base64", {
+  //       method: "POST",
+  //       body: formData,
+  //     });
+  //     const data = await response.json();
+
+  //     // Ensure data is an array
+  //     if (Array.isArray(data)) {
+  //       setBackendImages(data);
+  //     } else {
+  //       setBackendImages([data]); // In case the backend sends a single object, wrap it in an array
+  //     }
+  //   } catch (error) {
+  //     console.error("Error uploading images:", error);
+  //   }
+  // };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
