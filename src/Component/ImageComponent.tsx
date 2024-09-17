@@ -2,7 +2,10 @@
 import React, { useCallback, useRef, useState } from "react";
 
 const ImageComponent: React.FC = () => {
-  const [images, setImages] = useState<string[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]); // For input images
+  const [backendImages, setBackendImages] = useState<
+    { base64_image: string; attached_string: string }[]
+  >([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = useCallback(
@@ -12,8 +15,8 @@ const ImageComponent: React.FC = () => {
         const newImages = Array.from(files).map((file) =>
           URL.createObjectURL(file)
         );
-        setImages((prevImages) => [...prevImages, ...newImages]);
-        uploadToBackend(files); // Send the images to backend
+        setUploadedImages((prevImages) => [...prevImages, ...newImages]);
+        uploadToBackend(files);
       }
     },
     []
@@ -22,19 +25,16 @@ const ImageComponent: React.FC = () => {
   const uploadToBackend = async (files: FileList) => {
     const formData = new FormData();
     Array.from(files).forEach((file) => {
-      formData.append("files", file); // Append each image to formData
+      formData.append("files", file);
     });
 
     try {
-      const response = await fetch("http://localhost:8000/upload", {
+      const response = await fetch("http://localhost:8000/upload_with_base64", {
         method: "POST",
         body: formData,
       });
-      if (response.ok) {
-        console.log("Images uploaded successfully");
-      } else {
-        console.error("Failed to upload images");
-      }
+      const data = await response.json();
+      setBackendImages(data);
     } catch (error) {
       console.error("Error uploading images:", error);
     }
@@ -46,7 +46,7 @@ const ImageComponent: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Image Upload</h2>
+      <h2 className="text-2xl font-bold mb-4">Upload</h2>
       <div className="mb-4">
         <label
           htmlFor="image-upload"
@@ -74,23 +74,30 @@ const ImageComponent: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <h3 className="text-xl font-bold mb-2">Uploaded Images</h3>
       <div className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-2">
-        {images.map((image, index) => (
+        {uploadedImages.map((image, index) => (
           <div key={index} className="relative group">
             <img
               src={image}
               alt={`Uploaded image ${index + 1}`}
               className="w-full h-96 object-cover rounded-lg"
             />
-            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-lg">
-              <button
-                onClick={() => setImages(images.filter((_, i) => i !== index))}
-                className="text-white bg-red-600 hover:bg-red-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-                aria-label={`Delete image ${index + 1}`}
-              >
-                Delete
-              </button>
-            </div>
+          </div>
+        ))}
+      </div>
+
+      <h3 className="text-xl font-bold mt-6 mb-2">Processed Images</h3>
+      <div className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-2">
+        {backendImages.map((imageData, index) => (
+          <div key={index} className="relative group">
+            <img
+              src={`data:image/png;base64,${imageData.base64_image}`}
+              alt={`Backend processed image ${index + 1}`}
+              className="w-full h-96 object-cover rounded-lg"
+            />
+            <p className="mt-2 text-sm">{imageData.attached_string}</p>
           </div>
         ))}
       </div>
